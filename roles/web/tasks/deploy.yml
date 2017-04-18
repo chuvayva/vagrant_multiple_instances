@@ -1,0 +1,41 @@
+- name: SSH agent forwarding for ubuntu user
+  acl: name={{ item }} etype=user entity={{ user }} permissions=rwx state=present
+  with_items:
+    - "{{ ansible_env.SSH_AUTH_SOCK | dirname }}"
+    - "{{ ansible_env.SSH_AUTH_SOCK }}"
+  changed_when: false
+  become: true
+  become_user: root
+
+- name: Git checkout 
+  git: >
+    repo={{ clone_url }}
+    dest={{ home }}
+    accept_hostkey=yes
+    version={{ revision | default('master') }}
+  environment:
+    SSH_AUTH_SOCK: "{{ ansible_env.SSH_AUTH_SOCK }}"
+
+- name: Bundle install
+  command: "bundle --deployment --without='test development' chdir={{ home }}"
+  environment: "{{ env }}"
+  register: result
+  changed_when: "'Installing' in result.stdout"
+
+- name: Db migration
+  command: ./bin/rake db:migrate chdir={{ home }}
+  environment: "{{ env }}"
+  register: result
+  changed_when: result.stderr != ''
+
+- file: path={{ home }}/{{ item }} state=directory owner={{ user }} group={{ user }}
+  with_items:
+    - shared/pids
+    - shared/log
+
+- name: Assets precompile
+  command: ./bin/rake assets:precompile chdir={{ home }}
+  environment: "{{ env }}"
+  register: result
+  changed_when: result.stderr != ''
+

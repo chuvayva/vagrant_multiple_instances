@@ -1,0 +1,8 @@
+- include: setup.yml
+  become: true
+
+- include: deploy.yml
+  tags:
+    - deploy
+  become: true
+  become_user: "{{ user }}"

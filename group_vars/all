@@ -1,0 +1,13 @@
+project: teamvillage
+clone_url: git@github.com:chuvayva/teamvillage.git
+rails_env: development
+revision: master
+
+database: "{{ project }}_{{ rails_env }}"
+postgresql_version: 9.6
+home: "/var/www/{{ project }}"
+user: vagrant
+ruby_version: 2.3
+env:
+  RAILS_ENV: production
+  DATABASE_URL: "postgres://postgres:postgres@192.168.0.5:5432/{{ database }}"
